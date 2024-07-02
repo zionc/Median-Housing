@@ -1,0 +1,11 @@
+Goal: Use California census data to build a model of housing prices in the state. Model should learn from this data and predict
+the median housing price in any district.
+
+Objective: Results of this model (a prediction of the median housing price in a district) is fed to another machine learning system.
+
+System:
+- Supervised training since the data comes with the output, a district's median housing price.
+- Regression task since the model predicts a value based on features (district's population, median income, etc.) 
+- Univariate regression problem since we are predicting a single value for each district
+
+- root mean square error performance measure & mean absolute error
