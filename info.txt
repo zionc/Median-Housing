@@ -9,3 +9,8 @@ System:
 - Univariate regression problem since we are predicting a single value for each district
 
 - root mean square error performance measure & mean absolute error
+
+Train/Test split
+- 80% of the dataset will be used for training
+- 20% of the dataset will be used for testing
+- Median income plays a big role when determining median housing price

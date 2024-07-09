@@ -57,7 +57,17 @@ if __name__ == "__main__":
     housing = load_housing_data()
     housing_with_id = housing.reset_index()
     train_set, test_set = split_data_with_id_hash(data=housing_with_id,test_ratio=0.2, id_column="index")
-    print(train_set.head(), test_set.head())
+    
+    # Graphics to display dataset
+    
+    housing["income_category"] = pd.cut(housing["median_income"],
+                                        bins=[0., 1.5, 3.0, 4.5, 6., np.inf],
+                                        labels=[1,2,3,4,5])
+    housing["income_category"].value_counts().sort_index().plot.bar(rot=0, grid=True)
+    plt.xlabel("Income Category")
+    plt.ylabel("Number of districts")
+    plt.show()
+
 
 
 
