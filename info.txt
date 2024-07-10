@@ -10,7 +10,10 @@ System:
 
 - root mean square error performance measure & mean absolute error
 
-Train/Test split
+Data set
 - 80% of the dataset will be used for training
 - 20% of the dataset will be used for testing
 - Median income plays a big role when determining median housing price
+- Most districts are in a particular subset of median income, thus, the test set must be stratified 
+  to guarantee a close representation of the overall population
+

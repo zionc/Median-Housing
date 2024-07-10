@@ -51,22 +51,64 @@ def split_data_with_id_hash(data: pd.DataFrame, test_ratio:float, id_column: str
     in_test_set = ids.apply(lambda id_: is_id_in_test_set(id_, test_ratio))
     return data.loc[~in_test_set], data.loc[in_test_set]
 
+def graphics_display_value_population(data: pd.DataFrame) -> None:
+    """
+    Scatter plot of longitude and latitude.
+    Size of dot represents population (bigger size = greater population)
+    Heatmap represents median house value of the district
+    """
+    data.plot(kind="scatter", x="longitude", y="latitude", grid=True,
+              s=data["population"]/100, label="population",
+              c="median_house_value", colormap="jet", colorbar=True,
+              legend=True, sharex=False, figsize=(10,7))
+    plt.show()
+
+def graphics_scatter_matrix(data: pd.DataFrame, attributes: list) -> None:
+    """
+    Display correlation of attributes
+    """
+    pd.plotting.scatter_matrix(data[attributes], figsize=(12,8))
+    plt.show()
+
+
+
 if __name__ == "__main__":
 
     # Get data and split into train/test
+    housing:pd.DataFrame
+
     housing = load_housing_data()
     housing_with_id = housing.reset_index()
-    train_set, test_set = split_data_with_id_hash(data=housing_with_id,test_ratio=0.2, id_column="index")
     
-    # Graphics to display dataset
-    
+    # Stratify sample based on median income
     housing["income_category"] = pd.cut(housing["median_income"],
-                                        bins=[0., 1.5, 3.0, 4.5, 6., np.inf],
-                                        labels=[1,2,3,4,5])
-    housing["income_category"].value_counts().sort_index().plot.bar(rot=0, grid=True)
-    plt.xlabel("Income Category")
-    plt.ylabel("Number of districts")
-    plt.show()
+                                    bins=[0., 1.5, 3.0, 4.5, 6., np.inf],
+                                    labels=[1,2,3,4,5])
+    
+    strat_train_set, strat_test_set = sklearn.model_selection.train_test_split(
+        housing, test_size=0.2, stratify=housing["income_category"], random_state=42
+    )
+
+    # Remove income category
+    for set_ in (strat_train_set, strat_test_set):
+        set_.drop("income_category", axis = 1, inplace=True)
+
+    housing = strat_train_set.copy()
+    
+    # Look for correlations against median house price
+    housing.drop("ocean_proximity", axis=1, inplace=True)
+    housing["rooms_per_house"] = housing["total_rooms"]/housing["households"]
+    housing["bedrooms_ratio"]  = housing["total_bedrooms"]/housing["total_rooms"]
+    housing["people_per_house"] = housing["population"]/housing["households"]
+    corr_matrix = housing.corr()
+    print(corr_matrix["median_house_value"].sort_values(ascending=False))
+
+    
+
+    # Graphics to display dataset
+
+    # graphics_display_value_population(housing)
+    # graphics_scatter_matrix(housing,["median_house_value", "median_income", "total_rooms", "housing_median_age"])
 
 
 
