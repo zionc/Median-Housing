@@ -2,6 +2,7 @@ import sys
 
 import sklearn.impute
 import sklearn.model_selection
+import sklearn.preprocessing
 assert sys.version_info >= (3,7) # Python 3.7 or above
 import sklearn
 from pathlib import Path
@@ -126,7 +127,16 @@ if __name__ == "__main__":
 
     # Wrap NumPy array back into a Dataframe
     housing_tr = pd.DataFrame(X, columns=housing_num.columns, index=housing_num.index)
-    
+
+    # Label encoding to convert categorical values into numerical values
+    housing_cat = housing[["ocean_proximity"]]
+    # ordinal_encoder = sklearn.preprocessing.OrdinalEncoder()
+    # housing_cat_encoded = ordinal_encoder.fit_transform(housing_cat)
+
+    # One hot encoding to convert categorical values into vectors
+    cat_encoder = sklearn.preprocessing.OneHotEncoder()
+    housing_cat_1hot = cat_encoder.fit_transform(housing_cat)
+    print(housing_cat_1hot.toarray())
 
 
 
