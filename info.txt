@@ -17,3 +17,7 @@ Data set
 - Most districts are in a particular subset of median income, thus, the test set must be stratified 
   to guarantee a close representation of the overall population
 
+Data set cleanup
+- total_bedrooms attribute in the data set contains NaN values, so we'll use imputation to fill in the median
+  for these values
+

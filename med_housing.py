@@ -1,5 +1,6 @@
 import sys
 
+import sklearn.impute
 import sklearn.model_selection
 assert sys.version_info >= (3,7) # Python 3.7 or above
 import sklearn
@@ -65,7 +66,7 @@ def graphics_display_value_population(data: pd.DataFrame) -> None:
 
 def graphics_scatter_matrix(data: pd.DataFrame, attributes: list) -> None:
     """
-    Display correlation of attributes
+    Display correlation of attributes using panda's scatter matrix function
     """
     pd.plotting.scatter_matrix(data[attributes], figsize=(12,8))
     plt.show()
@@ -101,14 +102,33 @@ if __name__ == "__main__":
     housing["bedrooms_ratio"]  = housing["total_bedrooms"]/housing["total_rooms"]
     housing["people_per_house"] = housing["population"]/housing["households"]
     corr_matrix = housing.corr()
-    print(corr_matrix["median_house_value"].sort_values(ascending=False))
+    #print(corr_matrix["median_house_value"].sort_values(ascending=False))
 
     
+    
+    ######################################
+    #        Clean data         ##########
+    ######################################
 
-    # Graphics to display dataset
+    housing = strat_train_set.drop("median_house_value", axis=1)
+    housing_labels = strat_train_set["median_house_value"].copy()
+    
+    # housing.dropna(subset=["total_bedrooms"], inplace=True) 1#===> Remove all NaN instances in the dataset
+    # housing.drop("total_bedrooms",axis=1)                   2#===> Drop total_bedrooms column
+    # median = housing["total_bedrooms"].median()
+    # housing.fillna({"total_bedrooms":median}, inplace=True) 3#===> Impute NaN values with the median
 
-    # graphics_display_value_population(housing)
-    # graphics_scatter_matrix(housing,["median_house_value", "median_income", "total_rooms", "housing_median_age"])
+    # Impute data
+    imputer = sklearn.impute.SimpleImputer(strategy="median")
+    housing_num = housing.select_dtypes(include=[np.number]) # Create a copy of Dataframe with numerical attributes
+    imputer.fit(housing_num) # Compute medians of each attribute and store in statistics_ variable
+    X = imputer.transform(housing_num) # Impute missing values in training data
+
+    # Wrap NumPy array back into a Dataframe
+    housing_tr = pd.DataFrame(X, columns=housing_num.columns, index=housing_num.index)
+    
+
+
 
 
 
