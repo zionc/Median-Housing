@@ -53,7 +53,7 @@ def split_data_with_id_hash(data: pd.DataFrame, test_ratio:float, id_column: str
     in_test_set = ids.apply(lambda id_: is_id_in_test_set(id_, test_ratio))
     return data.loc[~in_test_set], data.loc[in_test_set]
 
-def graphics_display_value_population(data: pd.DataFrame) -> None:
+def graphics_display_value_population(data: pd.DataFrame, c_in:str="median_house_value") -> None:
     """
     Scatter plot of longitude and latitude.
     Size of dot represents population (bigger size = greater population)
@@ -61,7 +61,7 @@ def graphics_display_value_population(data: pd.DataFrame) -> None:
     """
     data.plot(kind="scatter", x="longitude", y="latitude", grid=True,
               s=data["population"]/100, label="population",
-              c="median_house_value", colormap="jet", colorbar=True,
+              c=c_in, colormap="jet", colorbar=True,
               legend=True, sharex=False, figsize=(10,7))
     plt.show()
 
@@ -136,9 +136,16 @@ if __name__ == "__main__":
     # One hot encoding to convert categorical values into vectors
     cat_encoder = sklearn.preprocessing.OneHotEncoder()
     housing_cat_1hot = cat_encoder.fit_transform(housing_cat)
-    print(housing_cat_1hot.toarray())
+    
 
+    # Normalize data
+    min_max_scaler = sklearn.preprocessing.MinMaxScaler(feature_range=(-1,1))
+    housing_num_min_max_scaled = min_max_scaler.fit_transform(housing_num)
+    housing_scaled = pd.DataFrame(housing_num_min_max_scaled, columns=housing_num.columns, index=housing_num.index)
 
+    # Standardize data
+    std_scaler = sklearn.preprocessing.StandardScaler()
+    std_scaler.fit_transform(housing_num)
 
 
 
