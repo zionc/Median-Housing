@@ -1,7 +1,10 @@
 import sys
 
+import sklearn.cluster
+import sklearn.compose
 import sklearn.impute
 import sklearn.model_selection
+import sklearn.pipeline
 import sklearn.preprocessing
 assert sys.version_info >= (3,7) # Python 3.7 or above
 import sklearn
@@ -12,6 +15,7 @@ import urllib.request
 import matplotlib.pyplot as plt
 import numpy as np
 from zlib import crc32
+from cluster_similarity import ClusterSimilarity
 
 def load_housing_data() -> pd.DataFrame:
     path = Path("datasets/housing.tgz")
@@ -72,7 +76,18 @@ def graphics_scatter_matrix(data: pd.DataFrame, attributes: list) -> None:
     pd.plotting.scatter_matrix(data[attributes], figsize=(12,8))
     plt.show()
 
+def column_ratio(X):
+    return X[:, [0]] / X[:, [1]]
 
+def ratio_name(function_transformer, feature_names_in):
+    return ["ratio"]
+
+def ratio_pipeline():
+    return sklearn.pipeline.make_pipeline(
+        sklearn.impute.SimpleImputer(strategy="median"),
+        sklearn.preprocessing.FunctionTransformer(column_ratio, feature_names_out=ratio_name),
+        sklearn.preprocessing.StandardScaler()
+    )
 
 if __name__ == "__main__":
 
@@ -147,6 +162,61 @@ if __name__ == "__main__":
     std_scaler = sklearn.preprocessing.StandardScaler()
     std_scaler.fit_transform(housing_num)
 
+    ######################################
+    #        Pipelines          ##########
+    ######################################
+    
+    # Pipeline for numerical attributes
+    num_pipeline = sklearn.pipeline.Pipeline([
+        ("impute", sklearn.impute.SimpleImputer(strategy="median")),
+        ("standardize", sklearn.preprocessing.StandardScaler()),
+    ])
+
+    housing_num_prepared = num_pipeline.fit_transform(housing_num)
+    df_housing_num_prepared = pd.DataFrame(
+        housing_num_prepared, columns=num_pipeline.get_feature_names_out(),
+        index=housing_num.index
+    )
+
+    num_attribs = np.array(housing_num.columns)
+    cat_attribs = ["ocean_proximity"]
+
+    # Pipeline for category attributes
+    cat_pipeline = sklearn.pipeline.Pipeline([
+        ("impute", sklearn.impute.SimpleImputer(strategy="most_frequent")),
+        ("Encode", sklearn.preprocessing.OneHotEncoder(handle_unknown="ignore"))
+    ])
+
+    # Pipeline to replace features with their logarithm
+    log_pipeline = sklearn.pipeline.make_pipeline(
+        sklearn.impute.SimpleImputer(strategy="median"),
+        sklearn.preprocessing.FunctionTransformer(np.log, feature_names_out="one-to-one"),
+        sklearn.preprocessing.StandardScaler()
+    )
+
+
+    cluster_simil = ClusterSimilarity(n_clusters=10, gamma=1., random_state=42)
+    default_num_pipeline = sklearn.pipeline.make_pipeline(
+        sklearn.impute.SimpleImputer(strategy="median"),
+        sklearn.preprocessing.StandardScaler()
+    )
+
+    preprocessing = sklearn.compose.ColumnTransformer([
+        ("bedrooms", ratio_pipeline(), ["total_bedrooms", "total_rooms"]),   
+        ("rooms_per_house", ratio_pipeline(), ["total_rooms", "households"]), 
+        ("people_per_house", ratio_pipeline(), ["population", "households"]),
+        ("log", log_pipeline, ["total_bedrooms", "total_rooms", "population", "households", "median_income"]),
+        ("geo", cluster_simil, ["latitude", "longitude"]),
+        ("cat", cat_pipeline, sklearn.compose.make_column_selector(dtype_include=object)),
+    ],
+        remainder=default_num_pipeline)
+    
+    housing_prepared = preprocessing.fit_transform(housing)
+    print(housing_prepared.shape)
+    print(preprocessing.get_feature_names_out())
+
+    
+    
 
 
 
