@@ -18,6 +18,9 @@ from zlib import crc32
 from cluster_similarity import ClusterSimilarity
 
 def load_housing_data() -> pd.DataFrame:
+    """
+    Load entire housing.csv data into a DataFrame
+    """
     path = Path("datasets/housing.tgz")
     if not path.is_file():
         Path("datasets").mkdir(parents=True, exist_ok=True)
@@ -212,11 +215,50 @@ if __name__ == "__main__":
         remainder=default_num_pipeline)
     
     housing_prepared = preprocessing.fit_transform(housing)
-    print(housing_prepared.shape)
-    print(preprocessing.get_feature_names_out())
-
-    
     
 
+    ######################################
+    #        Train models       ##########
+    ######################################
+
+    # Linear Regression
+    from sklearn.pipeline import make_pipeline
+    from sklearn.linear_model import LinearRegression
+
+    lin_reg = make_pipeline(preprocessing, LinearRegression())
+    lin_reg.fit(housing, housing_labels)
+
+    housing_predictions = lin_reg.predict(housing)
+    
+    from sklearn.metrics import mean_squared_error
+    lin_rmse = mean_squared_error(housing_labels, housing_predictions, squared=False)
+    # Root mean square error is $68,972 not very good. Linear Regression is underfitting the training data
+    
+
+    # Decision Tree Regressor
+    from sklearn.tree import DecisionTreeRegressor
+    tree_reg = make_pipeline(preprocessing, DecisionTreeRegressor(random_state=42))
+    tree_reg.fit(housing, housing_labels)
+    housing_predictions = tree_reg.predict(housing)
+
+    tree_rmse = mean_squared_error(housing_labels, housing_predictions, squared=False)
+    # Decision Tree Regressor provided a 0.0 rmse... most likely overfit the data
+
+    # Using cross validation to evaluate decision tree
+    from sklearn.model_selection import cross_val_score
+    tree_rmses = -cross_val_score(tree_reg, housing, housing_labels, scoring="neg_root_mean_squared_error", cv=10)
+    # Cross validation tells us the Decision Tree has an RMSE of 67,013 with a std of 1,460. 
+    # Decision Tree is severley overfitting since the training set yielded no errors while validation yielded a high error
 
 
+    # Random Forrest Regressor
+    from sklearn.ensemble import RandomForestRegressor
+    forrest_reg = make_pipeline(preprocessing, RandomForestRegressor(random_state=42))
+    forrest_reg.fit(housing, housing_labels)
+    forrest_predictions = forrest_reg.predict(housing)
+    
+    forrest_rmse = mean_squared_error(housing_labels, forrest_predictions, squared=False)
+    # Got 17,519
+
+    forrest_rmses = -cross_val_score(forrest_reg, housing, housing_labels, scoring="neg_root_mean_squared_error", cv=10)
+    # Cross validation yielded a 47124, this tells us that this model, although performed well, is still overfitting data
