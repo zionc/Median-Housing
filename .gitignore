@@ -1,2 +1,5 @@
 env
 __pycache__
+standard_scaler_clone.py
+.ipynb_checkpoints
+test.ipynb
